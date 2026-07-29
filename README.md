@@ -59,12 +59,37 @@ If you are setting up Wardrobe for a user, ask how they want to import their clo
 
 | Variable | Default |
 | --- | --- |
-| `OPENAI_API_KEY` | Required |
+| `WARDROBE_AI_PROVIDER` | `openai` (or `azure`) |
+| `OPENAI_API_KEY` | Required for `openai` |
 | `OPENAI_VISION_MODEL` | `gpt-5.4-mini` |
 | `OPENAI_IMAGE_MODEL` | `gpt-image-2` |
 | `OPENAI_IMAGE_QUALITY` | `high` |
 | `WARDROBE_MODEL_REFERENCE` | `data/model-reference.png` |
 | `WARDROBE_DATA_DIR` | `data` |
+| `WARDROBE_AI_CONCURRENCY` | `1` on Azure, `2` on OpenAI |
+
+### Azure OpenAI
+
+Set `WARDROBE_AI_PROVIDER=azure` to run against Azure OpenAI / Microsoft Foundry instead.
+Azure identifies models by **deployment name**, so these values are the names you chose
+when deploying, not model ids.
+
+| Variable | Default |
+| --- | --- |
+| `AZURE_OPENAI_ENDPOINT` | Required, e.g. `https://<resource>.openai.azure.com` |
+| `AZURE_OPENAI_API_KEY` | Required |
+| `AZURE_OPENAI_VISION_DEPLOYMENT` | Required |
+| `AZURE_OPENAI_IMAGE_DEPLOYMENT` | Required, a `gpt-image-2` deployment |
+| `AZURE_OPENAI_GARMENT_DEPLOYMENT` | Falls back to `AZURE_OPENAI_IMAGE_DEPLOYMENT` |
+| `AZURE_OPENAI_MODELED_DEPLOYMENT` | Falls back to `AZURE_OPENAI_IMAGE_DEPLOYMENT` |
+| `AZURE_OPENAI_IMAGE_API_VERSION` | `2025-04-01-preview` |
+
+`gpt-image-2` is generally available on Azure with no access application. New
+subscriptions start near 6 requests per minute, so imports are queued and retried with
+backoff; raise `WARDROBE_AI_CONCURRENCY` once your quota allows.
+
+See [the design doc](docs/superpowers/specs/2026-07-30-azure-provider-design.md) for
+provisioning commands and the verified API details.
 
 ## License
 
