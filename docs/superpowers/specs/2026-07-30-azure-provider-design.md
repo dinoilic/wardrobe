@@ -57,6 +57,28 @@ Deliberately unresolved until a live request can settle them:
   filtered too. Clothed adults are fine; occasional `contentFilter` rejections are
   expected rather than systematic failure.
 
+### Confirmed against a live resource (2026-07-30)
+
+Probed with `scripts/ai/probe.mjs` against a Sweden Central `AIServices` resource
+(`*.cognitiveservices.azure.com`, `gpt-image-2` + `gpt-5.6-luna` deployments). Every
+assumption above held, so no code changed as a result:
+
+| Question | Result |
+| --- | --- |
+| Auth header | `api-key` works; `Authorization: Bearer` also works |
+| Image `api-version` | `2025-04-01-preview` works; `2024-02-01` returns 404 |
+| Single-image field | `image[]` |
+| **Two-image field** | **`image[]`** — the modeled stage is viable |
+| `/openai/v1/responses` | reachable on the `cognitiveservices.azure.com` hostname |
+| Vision + strict `json_schema` | correctly returned garments, hex colours, tags, bounding boxes |
+
+The `cognitiveservices.azure.com` hostname serves both surfaces, so the classic
+`openai.azure.com` hostname is not required.
+
+Rate limiting was observed repeatedly at Tier 1: four probe calls in succession returned
+`429 ... Please retry after 37 seconds`, and each successful edit took 10–13s. This is the
+behaviour the limiter and backoff exist for.
+
 ## Design
 
 ### New: `scripts/ai/provider.mjs`
@@ -154,8 +176,9 @@ No Azure resource exists yet, so correctness is established without one:
    fields including repeated `image[]`. This proves request construction, which is where
    nearly all provider risk lives.
 2. `npm run check` (build) must pass.
-3. **Live probe**, once the resource exists: run one real garment edit and confirm the
-   response decodes. This also settles the v1-images and content-filter unknowns.
+3. **Live probe**, once the resource exists: run `node scripts/ai/probe.mjs` to confirm the
+   auth header, api-version, and multipart field name against a real deployment. It stops
+   as soon as each question is answered and backs off through rate limits.
 
 ## Out of scope
 
